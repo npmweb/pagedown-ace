@@ -111,20 +111,22 @@
                                                   * its own image insertion dialog, this hook should return true, and the callback should be called with the chosen
                                                   * image url (or null if the user cancelled). If this hook returns false, the default dialog will be used.
                                                   */
+        hooks.addFalse("insertLinkDialog");
 
         this.getConverter = function () { return markdownConverter; }
 
         var that = this,
             panels;
 
-        this.run = function () {
+        var undoManager;
+        this.run = function (previewWrapper) {
             if (panels)
                 return; // already initialized
 
             panels = new PanelCollection(idPostfix);
             var commandManager = new CommandManager(hooks, getString);
-            var previewManager = new PreviewManager(markdownConverter, panels, function () { hooks.onPreviewRefresh(); });
-            var undoManager, uiManager;
+            var previewManager = new PreviewManager(markdownConverter, panels, function () { hooks.onPreviewRefresh(); }, previewWrapper);
+            var uiManager;
 
             if (!/\?noundo/.test(doc.location.href)) {
                 undoManager = new UndoManager(function () {
@@ -144,7 +146,9 @@
 
             var forceRefresh = that.refreshPreview = function () { previewManager.refresh(true); };
 
-            forceRefresh();
+            //Not necessary
+            //forceRefresh();
+            return undoManager;
         };
 
     }
@@ -672,6 +676,22 @@
         var init = function () {
             setEventHandlers();
             refreshState(true);
+            //Not necessary
+            //saveState();
+        };
+        
+        this.reinit = function(content, start, end, scrollTop) {
+            undoStack = [];
+            stackPtr = 0;
+            mode = "none";
+            lastState = undefined;
+            timer = undefined;
+            refreshState();
+            inputStateObj.text = content;
+            inputStateObj.start = start;
+            inputStateObj.end = end;
+            inputStateObj.scrollTop = scrollTop;
+            inputStateObj.setInputAreaSelection();
             saveState();
         };
 
@@ -820,7 +840,7 @@
         this.init();
     };
 
-    function PreviewManager(converter, panels, previewRefreshCallback) {
+    function PreviewManager(converter, panels, previewRefreshCallback, previewWrapper) {
 
         var managerObj = this;
         var timeout;
@@ -886,6 +906,9 @@
 
             pushPreviewHtml(text);
         };
+        if(previewWrapper !== undefined) {
+        	makePreviewHtml = previewWrapper(makePreviewHtml);
+        }
 
         // setTimeout is already used.  Used as an event listener.
         var applyTimeout = function () {
@@ -1005,7 +1028,8 @@
         var init = function () {
 
             setupEvents(panels.input, applyTimeout);
-            makePreviewHtml();
+            //Not necessary
+            //makePreviewHtml();
 
             if (panels.preview) {
                 panels.preview.scrollTop = 0;
@@ -1412,10 +1436,12 @@
                         return false;
                     }
                 }
+                button.className = button.className.replace(/ disabled/g, "");
             }
             else {
                 image.style.backgroundPosition = button.XShift + " " + disabledYShift;
                 button.onmouseover = button.onmouseout = button.onclick = function () { };
+                button.className += " disabled";
             }
         }
 
@@ -1780,7 +1806,8 @@
                     ui.prompt(this.getString("imagedialog"), imageDefaultText, linkEnteredCallback);
             }
             else {
-                ui.prompt(this.getString("linkdialog"), linkDefaultText, linkEnteredCallback);
+                if (!this.hooks.insertLinkDialog(linkEnteredCallback))
+                	ui.prompt(this.getString("linkdialog"), linkDefaultText, linkEnteredCallback);
             }
             return true;
         }
