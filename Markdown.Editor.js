@@ -2,6 +2,7 @@
 
 (function () {
 
+    
     var util = {},
         position = {},
         ui = {},
@@ -18,40 +19,54 @@
         };
 
     var defaultsStrings = {
-        bold: "Strong <strong> Ctrl+B",
+        bold: "Strong <strong>",
         boldexample: "strong text",
-
-        italic: "Emphasis <em> Ctrl+I",
+        
+        italic: "Emphasis <em>",
         italicexample: "emphasized text",
-
-        link: "Hyperlink <a> Ctrl+L",
+        
+        link: "Hyperlink <a>",
         linkdescription: "enter link description here",
         linkdialog: "<p><b>Insert Hyperlink</b></p><p>http://example.com/ \"optional title\"</p>",
-
-        quote: "Blockquote <blockquote> Ctrl+Q",
+        
+        quote: "Blockquote <blockquote>",
         quoteexample: "Blockquote",
-
-        code: "Code Sample <pre><code> Ctrl+K",
+        
+        code: "Code Sample <pre><code>",
         codeexample: "enter code here",
-
-        image: "Image <img> Ctrl+G",
+        
+        image: "Image <img>",
         imagedescription: "enter image description here",
         imagedialog: "<p><b>Insert Image</b></p><p>http://example.com/images/diagram.jpg \"optional title\"<br><br>Need <a href='http://www.google.com/search?q=free+image+hosting' target='_blank'>free image hosting?</a></p>",
-
-        olist: "Numbered List <ol> Ctrl+O",
-        ulist: "Bulleted List <ul> Ctrl+U",
+        
+        olist: "Numbered List <ol>",
+        ulist: "Bulleted List <ul>",
         litem: "List item",
-
-        heading: "Heading <h1>/<h2> Ctrl+H",
+        
+        heading: "Heading <h1>/<h2>",
         headingexample: "Heading",
-
-        hr: "Horizontal Rule <hr> Ctrl+R",
-
-        undo: "Undo - Ctrl+Z",
-        redo: "Redo - Ctrl+Y",
-        redomac: "Redo - Ctrl+Shift+Z",
-
+        
+        hr: "Horizontal Rule <hr>",
+        
+        undo: "Undo -",
+        redo: "Redo -",
+        
         help: "Markdown Editing Help"
+    };
+    
+    var keyStrokes = {
+        bold: "B",
+        italic: "I",
+        link: "L",
+        quote: "Q",
+        code: "K",
+        image: "G",
+        olist: "O",
+        ulist: "U",
+        heading: "H",
+        hr: "R",
+        undo: "Z",
+        redo: "Y",
     };
 
 
@@ -101,6 +116,7 @@
             options.strings.help = options.strings.help || options.helpButton.title;
         }
         var getString = function (identifier) { return options.strings[identifier] || defaultsStrings[identifier]; }
+        var getKey = function (identifier) { return (/win/.test(nav.platform.toLowerCase()) ? 'Ctrl+' : 'Command+') + keyStrokes[identifier]; };
 
         idPostfix = idPostfix || "";
 
@@ -119,15 +135,16 @@
             panels;
 
         var undoManager;
-        this.run = function (previewWrapper) {
+        this.run = function (aceEditor, previewWrapper) {
             if (panels)
                 return; // already initialized
 
-            panels = new PanelCollection(idPostfix);
+            panels = new PanelCollection(idPostfix, aceEditor);
             var commandManager = new CommandManager(hooks, getString);
             var previewManager = new PreviewManager(markdownConverter, panels, function () { hooks.onPreviewRefresh(); }, previewWrapper);
             var uiManager;
 
+            /*benweet
             if (!/\?noundo/.test(doc.location.href)) {
                 undoManager = new UndoManager(function () {
                     previewManager.refresh();
@@ -140,15 +157,14 @@
                     that.refreshPreview();
                 }
             }
+            */
 
-            uiManager = new UIManager(idPostfix, panels, undoManager, previewManager, commandManager, options.helpButton, getString);
+            uiManager = new UIManager(idPostfix, panels, undoManager, previewManager, commandManager, options.helpButton, getString, getKey);
             uiManager.setUndoRedoButtonStates();
 
             var forceRefresh = that.refreshPreview = function () { previewManager.refresh(true); };
 
-            //Not necessary
-            //forceRefresh();
-            that.undoManager = undoManager;
+            forceRefresh();
             that.uiManager = uiManager;
         };
 
@@ -302,10 +318,10 @@
     // This ONLY affects Internet Explorer (tested on versions 6, 7
     // and 8) and ONLY on button clicks.  Keyboard shortcuts work
     // normally since the focus never leaves the textarea.
-    function PanelCollection(postfix) {
+    function PanelCollection(postfix, aceEditor) {
         this.buttonBar = doc.getElementById("wmd-button-bar" + postfix);
         this.preview = doc.getElementById("wmd-preview" + postfix);
-        this.input = doc.getElementById("wmd-input" + postfix);
+        this.input = aceEditor;
     };
 
     // Returns true if the DOM element is visible, false if it's hidden.
@@ -451,6 +467,7 @@
         return [maxWidth, maxHeight, innerWidth, innerHeight];
     };
 
+    /*benweet
     // Handles pushing and popping TextareaStates for undo/redo commands.
     // I should rename the stack variables to list.
     function UndoManager(callback, panels) {
@@ -701,6 +718,7 @@
     }
 
     // end of UndoManager
+    */
 
     // The input textarea state/contents.
     // This is used to implement undo/redo by the undo manager.
@@ -710,25 +728,44 @@
         var stateObj = this;
         var inputArea = panels.input;
         this.init = function () {
+            /*benweet
             if (!util.isVisible(inputArea)) {
                 return;
             }
             if (!isInitialState && doc.activeElement && doc.activeElement !== inputArea) { // this happens when tabbing out of the input box
                 return;
             }
+            */
 
+            var Range = typeof require !== 'undefined' ? require('ace/range').Range : ace.require('ace/range').Range;
+            (function(range) {
+                stateObj.before = inputArea.session.getTextRange(new Range(0,0,range.start.row, range.start.column));
+                stateObj.selection = inputArea.session.getTextRange();
+                stateObj.after = inputArea.session.getTextRange(new Range(range.end.row, range.end.column, Number.MAX_VALUE, Number.MAX_VALUE));
+            })(inputArea.selection.getRange());
+            this.text = [this.before, this.selection, this.after].join('');
+            this.length = this.text.length;
             this.setInputAreaSelectionStartEnd();
-            this.scrollTop = inputArea.scrollTop;
+            this.scrollTop = inputArea.renderer.getScrollTop();
+            /*benweet
             if (!this.text && inputArea.selectionStart || inputArea.selectionStart === 0) {
                 this.text = inputArea.value;
             }
-
+            */
         }
 
         // Sets the selected text in the input box after we've performed an
         // operation.
         this.setInputAreaSelection = function () {
 
+            var Range = typeof require !== 'undefined' ? require('ace/range').Range : ace.require('ace/range').Range;
+            inputArea.selection.setSelectionRange((function(posStart, posEnd) {
+                return new Range(posStart.row, posStart.column, posEnd.row, posEnd.column);
+            })(inputArea.session.doc.indexToPosition(stateObj.start), inputArea.session.doc.indexToPosition(stateObj.end)));
+            inputArea.renderer.scrollToY(stateObj.scrollTop);
+            inputArea.focus();
+            
+            /*benweet
             if (!util.isVisible(inputArea)) {
                 return;
             }
@@ -754,10 +791,15 @@
                 range.moveStart("character", stateObj.start);
                 range.select();
             }
+            */
         };
 
         this.setInputAreaSelectionStartEnd = function () {
-
+            
+            stateObj.start = stateObj.before.length;
+            stateObj.end = stateObj.after.length;
+            
+            /*benweet
             if (!panels.ieCachedRange && (inputArea.selectionStart || inputArea.selectionStart === 0)) {
 
                 stateObj.start = inputArea.selectionStart;
@@ -802,27 +844,56 @@
 
                 this.setInputAreaSelection();
             }
+            */
         };
 
         // Restore this state into the input area.
         this.restore = function () {
+            // Here we could do editor.setValue but we want to update the less we can for undo management
+            
+            // Find the first modified char
+            var startIndex = 0;
+            var startIndexMax = stateObj.before.length; 
+            while(startIndex < startIndexMax) {
+                if(stateObj.before.charCodeAt(startIndex) !== stateObj.text.charCodeAt(startIndex))
+                    break;
+                startIndex++;
+            }
+            // Find the last modified char
+            var endIndex = 0;
+            var endIndexMax = stateObj.after.length;
+            var beforeMaxOffset = stateObj.after.length - 1;
+            var afterMaxOffset = stateObj.text.length - 1;
+            while(endIndex < endIndexMax) {
+                if(stateObj.after.charCodeAt(beforeMaxOffset - endIndex) !== stateObj.text.charCodeAt(afterMaxOffset - endIndex))
+                    break;
+                endIndex++;
+            }
+            
+            var Range = typeof require !== 'undefined' ? require('ace/range').Range : ace.require('ace/range').Range;
+            var range = (function(posStart, posEnd) {
+                return new Range(posStart.row, posStart.column, posEnd.row, posEnd.column);
+            })(inputArea.session.doc.indexToPosition(startIndex), inputArea.session.doc.indexToPosition(stateObj.length - endIndex));
+            inputArea.session.replace(range, stateObj.text.substring(startIndex, afterMaxOffset - endIndex + 1));
+            this.setInputAreaSelection();
 
+            /*benweet
             if (stateObj.text != undefined && stateObj.text != inputArea.value) {
                 inputArea.value = stateObj.text;
             }
-            this.setInputAreaSelection();
             inputArea.scrollTop = stateObj.scrollTop;
+            */
         };
 
         // Gets a collection of HTML chunks from the inptut textarea.
         this.getChunks = function () {
 
             var chunk = new Chunks();
-            chunk.before = util.fixEolChars(stateObj.text.substring(0, stateObj.start));
+            chunk.before = stateObj.before;
             chunk.startTag = "";
-            chunk.selection = util.fixEolChars(stateObj.text.substring(stateObj.start, stateObj.end));
+            chunk.selection = stateObj.selection;
             chunk.endTag = "";
-            chunk.after = util.fixEolChars(stateObj.text.substring(stateObj.end));
+            chunk.after = stateObj.after;
             chunk.scrollTop = stateObj.scrollTop;
 
             return chunk;
@@ -852,6 +923,7 @@
         var startType = "delayed"; // The other legal value is "manual"
 
         // Adds event listeners to elements
+        /*benweet
         var setupEvents = function (inputElem, listener) {
 
             util.addEvent(inputElem, "input", listener);
@@ -861,6 +933,7 @@
             util.addEvent(inputElem, "keypress", listener);
             util.addEvent(inputElem, "keydown", listener);
         };
+        */
 
         var getDocScrollTop = function () {
 
@@ -889,7 +962,7 @@
                 return;
 
 
-            var text = panels.input.value;
+            var text = panels.input.getValue();
             if (text && text == oldInputText) {
                 return; // Input text hasn't changed.
             }
@@ -1029,7 +1102,10 @@
 
         var init = function () {
 
+            /*benweet
             setupEvents(panels.input, applyTimeout);
+            */
+            panels.input.session.on('change', applyTimeout);
             //Not necessary
             //makePreviewHtml();
 
@@ -1238,11 +1314,20 @@
         }, 0);
     };
 
-    function UIManager(postfix, panels, undoManager, previewManager, commandManager, helpOptions, getString) {
+    function UIManager(postfix, panels, undoManager, previewManager, commandManager, helpOptions, getString, getKey) {
+        var getStringAndKey = function (identifier) { return getString(identifier) + ' ' + getKey(identifier); };
 
         var inputBox = panels.input,
             buttons = {}; // buttons.undo, buttons.link, etc. The actual DOM elements.
 
+        this.setUndoRedoButtonStates = function() {
+            setTimeout(function() {
+                setupButton(buttons.undo, inputBox.session.getUndoManager().hasUndo());
+                setupButton(buttons.redo, inputBox.session.getUndoManager().hasRedo());
+            }, 50);
+        };
+
+        var that = this;
         makeSpritedButtonRow();
 
         var keyEvent = "keydown";
@@ -1250,6 +1335,23 @@
             keyEvent = "keypress";
         }
 
+        function addKeyCmd(identifierList) {
+            if(identifierList.length === 0) {
+                return;
+            }
+            var identifier = identifierList.pop();
+            inputBox.commands.addCommand({
+                name: getString(identifier),
+                bindKey: {win: 'Ctrl-' + keyStrokes[identifier],  mac: 'Command-' + keyStrokes[identifier]},
+                exec: function(editor) {
+                    doClick(buttons[identifier]);
+                },
+            });
+            addKeyCmd(identifierList);
+        }
+        addKeyCmd(['bold', 'italic', 'link', 'quote', 'code', 'image', 'olist', 'ulist', 'heading', 'hr']);
+        
+        /*benweet
         util.addEvent(inputBox, keyEvent, function (key) {
 
             // Check to see if we have a button key and, if so execute the callback.
@@ -1343,16 +1445,18 @@
                 }
             });
         }
+        */
 
 
         // Perform the button's action.
         function doClick(button) {
 
             inputBox.focus();
+            var linkOrImage = button.id == "wmd-link-button" || button.id == "wmd-image-button";
 
             if (button.textOp) {
 
-                if (undoManager) {
+                if (undoManager && !linkOrImage) {
                     undoManager.setCommandMode();
                 }
 
@@ -1397,7 +1501,11 @@
 
                 if (!noCleanup) {
                     fixupInputArea();
-                    inputBox.dispatchEvent(new Event('input'));
+                    /*benweet
+                    if(!linkOrImage) {
+                        inputBox.dispatchEvent(new Event('input'));
+                    }
+                    */
                 }
 
             }
@@ -1432,7 +1540,7 @@
                             return;
                         }
                         panels.ieCachedRange = document.selection.createRange();
-                        panels.ieCachedScrollTop = panels.input.scrollTop;
+                        panels.ieCachedScrollTop = panels.input.renderer.getScrollTop();
                     };
                 }
 
@@ -1497,36 +1605,32 @@
                 xPosition += 25;
             }
 
-            buttons.bold = makeButton("wmd-bold-button", getString("bold"), "0px", bindCommand("doBold"));
-            buttons.italic = makeButton("wmd-italic-button", getString("italic"), "-20px", bindCommand("doItalic"));
+            buttons.bold = makeButton("wmd-bold-button", getStringAndKey("bold"), "0px", bindCommand("doBold"));
+            buttons.italic = makeButton("wmd-italic-button", getStringAndKey("italic"), "-20px", bindCommand("doItalic"));
             makeSpacer(1);
-            buttons.link = makeButton("wmd-link-button", getString("link"), "-40px", bindCommand(function (chunk, postProcessing) {
+            buttons.link = makeButton("wmd-link-button", getStringAndKey("link"), "-40px", bindCommand(function (chunk, postProcessing) {
                 return this.doLinkOrImage(chunk, postProcessing, false);
             }));
-            buttons.quote = makeButton("wmd-quote-button", getString("quote"), "-60px", bindCommand("doBlockquote"));
-            buttons.code = makeButton("wmd-code-button", getString("code"), "-80px", bindCommand("doCode"));
-            buttons.image = makeButton("wmd-image-button", getString("image"), "-100px", bindCommand(function (chunk, postProcessing) {
+            buttons.quote = makeButton("wmd-quote-button", getStringAndKey("quote"), "-60px", bindCommand("doBlockquote"));
+            buttons.code = makeButton("wmd-code-button", getStringAndKey("code"), "-80px", bindCommand("doCode"));
+            buttons.image = makeButton("wmd-image-button", getStringAndKey("image"), "-100px", bindCommand(function (chunk, postProcessing) {
                 return this.doLinkOrImage(chunk, postProcessing, true);
             }));
             makeSpacer(2);
-            buttons.olist = makeButton("wmd-olist-button", getString("olist"), "-120px", bindCommand(function (chunk, postProcessing) {
+            buttons.olist = makeButton("wmd-olist-button", getStringAndKey("olist"), "-120px", bindCommand(function (chunk, postProcessing) {
                 this.doList(chunk, postProcessing, true);
             }));
-            buttons.ulist = makeButton("wmd-ulist-button", getString("ulist"), "-140px", bindCommand(function (chunk, postProcessing) {
+            buttons.ulist = makeButton("wmd-ulist-button", getStringAndKey("ulist"), "-140px", bindCommand(function (chunk, postProcessing) {
                 this.doList(chunk, postProcessing, false);
             }));
-            buttons.heading = makeButton("wmd-heading-button", getString("heading"), "-160px", bindCommand("doHeading"));
-            buttons.hr = makeButton("wmd-hr-button", getString("hr"), "-180px", bindCommand("doHorizontalRule"));
+            buttons.heading = makeButton("wmd-heading-button", getStringAndKey("heading"), "-160px", bindCommand("doHeading"));
+            buttons.hr = makeButton("wmd-hr-button", getStringAndKey("hr"), "-180px", bindCommand("doHorizontalRule"));
             makeSpacer(3);
-            buttons.undo = makeButton("wmd-undo-button", getString("undo"), "-200px", null);
-            buttons.undo.execute = function (manager) { if (manager) manager.undo(); };
+            buttons.undo = makeButton("wmd-undo-button", getStringAndKey("undo"), "-200px", null);
+            buttons.undo.execute = function (manager) { inputBox.session.getUndoManager().undo(); };
 
-            var redoTitle = /win/.test(nav.platform.toLowerCase()) ?
-                getString("redo") :
-                getString("redomac"); // mac and other non-Windows platforms
-
-            buttons.redo = makeButton("wmd-redo-button", redoTitle, "-220px", null);
-            buttons.redo.execute = function (manager) { if (manager) manager.redo(); };
+            buttons.redo = makeButton("wmd-redo-button", getStringAndKey("redo"), "-220px", null);
+            buttons.redo.execute = function (manager) { inputBox.session.getUndoManager().redo(); };
 
             if (helpOptions) {
                 var helpButton = document.createElement("li");
@@ -1545,17 +1649,12 @@
                 buttons.help = helpButton;
             }
 
-            setUndoRedoButtonStates();
+            that.setUndoRedoButtonStates();
+            inputBox.session.on('change', function() {
+                that.setUndoRedoButtonStates();
+            });
         }
 
-        function setUndoRedoButtonStates() {
-            if (undoManager) {
-                setupButton(buttons.undo, undoManager.canUndo());
-                setupButton(buttons.redo, undoManager.canRedo());
-            }
-        };
-
-        this.setUndoRedoButtonStates = setUndoRedoButtonStates;
         this.buttons = buttons;
         this.setButtonState = setupButton;
 
