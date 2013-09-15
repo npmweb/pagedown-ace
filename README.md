@@ -1,7 +1,7 @@
 PageDown ACE
 ============
 
-PageDown ACE is a port of [PageDown](https://code.google.com/p/pagedown/wiki/PageDown) running with [ACE editor](http://ace.c9.io/) instead of a `textarea`.
+**PageDown ACE** is a port of [PageDown](https://code.google.com/p/pagedown/wiki/PageDown) running with [ACE editor](http://ace.c9.io/) instead of a `textarea`.
 
 Basically:
 
