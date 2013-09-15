@@ -7,7 +7,7 @@ Basically:
 
 ```html
     <div id="wmd-button-bar"></div>
-    <div id="wmd-input">
+    <div id="wmd-input"></div>
     <script type="text/javascript">
         var converter = new Markdown.Converter();
         var editor = new Markdown.Editor(converter);
