@@ -5,7 +5,7 @@ PageDown ACE is a port of [PageDown](https://code.google.com/p/pagedown/wiki/Pag
 
 Basically:
 
-```
+```js
     <div id="wmd-button-bar"></div>
     <div id="wmd-input">
     <script type="text/javascript">
