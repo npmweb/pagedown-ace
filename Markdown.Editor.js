@@ -1,4 +1,4 @@
-﻿// needs Markdown.Converter.js at the moment
+// needs Markdown.Converter.js at the moment
 
 (function () {
 
@@ -55,18 +55,54 @@
     };
     
     var keyStrokes = {
-        bold: "B",
-        italic: "I",
-        link: "L",
-        quote: "Q",
-        code: "K",
-        image: "G",
-        olist: "O",
-        ulist: "U",
-        heading: "H",
-        hr: "R",
-        undo: "Z",
-        redo: "Y",
+        bold: {
+            win: 'Ctrl-B',
+            mac: 'Command-B|Ctrl-B',
+        },
+        italic: {
+            win: 'Ctrl-I',
+            mac: 'Command-I|Ctrl-I',
+        },
+        link: {
+            win: 'Ctrl-L',
+            mac: 'Command-L|Ctrl-L',
+        },
+        quote: {
+            win: 'Ctrl-Q',
+            mac: 'Command-Q|Ctrl-Q',
+        },
+        code: {
+            win: 'Ctrl-K',
+            mac: 'Command-K|Ctrl-K',
+        },
+        image: {
+            win: 'Ctrl-G',
+            mac: 'Command-G|Ctrl-G',
+        },
+        olist: {
+            win: 'Ctrl-O',
+            mac: 'Command-O|Ctrl-O',
+        },
+        ulist: {
+            win: 'Ctrl-U',
+            mac: 'Command-U|Ctrl-U',
+        },
+        heading: {
+            win: 'Ctrl-H',
+            mac: 'Command-H|Ctrl-H',
+        },
+        hr: {
+            win: 'Ctrl-R',
+            mac: 'Command-R|Ctrl-R',
+        },
+        undo: {
+            win: 'Ctrl-Z',
+            mac: 'Command-Z',
+        },
+        redo: {
+            win: 'Ctrl-Y|Ctrl-Shift-Z',
+            mac: 'Command-Y|Command-Shift-Z',
+        },
     };
 
 
@@ -115,8 +151,13 @@
         if (options.helpButton) {
             options.strings.help = options.strings.help || options.helpButton.title;
         }
+        // Override default keystrokes
+        if(options.keyStrokes) {
+            for(var key in options.keyStrokes) {
+                keyStrokes[key] = options.keyStrokes[key];
+            }
+        }
         var getString = function (identifier) { return options.strings[identifier] || defaultsStrings[identifier]; }
-        var getKey = function (identifier) { return (/win/.test(nav.platform.toLowerCase()) ? 'Ctrl+' : 'Command+') + keyStrokes[identifier]; };
 
         idPostfix = idPostfix || "";
 
@@ -159,6 +200,12 @@
             }
             */
 
+            var useragent = typeof require !== 'undefined' ? require('ace/lib/useragent') : aceEditor.require('ace/lib/useragent');
+            var getKey = function (identifier) {
+                var keyStroke = keyStrokes[identifier][useragent.isMac ? "mac" : "win"];
+                var orIndex = keyStroke.indexOf('|');
+                return keyStroke.substring(0, orIndex > 0 ? orIndex : keyStroke.length);
+            };
             uiManager = new UIManager(idPostfix, panels, undoManager, previewManager, commandManager, options.helpButton, getString, getKey);
             uiManager.setUndoRedoButtonStates();
 
@@ -1342,7 +1389,7 @@
             var identifier = identifierList.pop();
             inputBox.commands.addCommand({
                 name: getString(identifier),
-                bindKey: {win: 'Ctrl-' + keyStrokes[identifier],  mac: 'Command-' + keyStrokes[identifier]},
+                bindKey: keyStrokes[identifier],
                 exec: function(editor) {
                     doClick(buttons[identifier]);
                 },
@@ -2053,6 +2100,8 @@
 
         // end of change
 
+        /*benweet Don't really know the purpose of it but it is destructive
+        
         if (chunk.after) {
             chunk.after = chunk.after.replace(/^\n?/, "\n");
         }
@@ -2063,6 +2112,7 @@
                 return "";
             }
         );
+        */
 
         var replaceBlanksInTags = function (useBracket) {
 
