@@ -200,7 +200,7 @@
             }
             */
 
-            var useragent = typeof require !== 'undefined' ? require('ace/lib/useragent') : aceEditor.require('ace/lib/useragent');
+            var useragent = typeof require !== 'undefined' ? require('ace/lib/useragent') : ace.require('ace/lib/useragent');
             var getKey = function (identifier) {
                 var keyStroke = keyStrokes[identifier][useragent.isMac ? "mac" : "win"];
                 var orIndex = keyStroke.indexOf('|');
