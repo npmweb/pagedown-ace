@@ -15,6 +15,9 @@
                 "Markdown.Converter.js",
                 "Markdown.Sanitizer.js",
                 "Markdown.Editor.js"
+            ],
+            "files": [
+                "wmd-buttons.png"
             ]
         }
     }
