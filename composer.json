@@ -15,10 +15,7 @@
                 "Markdown.Converter.js",
                 "Markdown.Sanitizer.js",
                 "Markdown.Editor.js"
-            ],
-            "shim": {
-                "deps": ["ace"]
-            }
+            ]
         }
     }
 }
