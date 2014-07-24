@@ -1,0 +1,24 @@
+{
+    "name": "npmweb/pagedown-ace",
+    "description": "PageDown ACE with a Composer Components config file",
+    "type": "component",
+    "repositories": [
+        { "type": "vcs", "url": "git@github.com:npmweb/ace" }
+    ],
+    "require": {
+        "robloach/component-installer": "*",
+        "npmweb/ace": "dev-master@dev"
+    },
+    "extra": {
+        "component": {
+            "scripts": [
+                "Markdown.Converter.js",
+                "Markdown.Sanitizer.js",
+                "Markdown.Editor.js"
+            ],
+            "shim": {
+                "deps": ["ace"]
+            }
+        }
+    }
+}
