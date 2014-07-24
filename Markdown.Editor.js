@@ -1652,6 +1652,7 @@
                 xPosition += 25;
             }
 
+            // TODO make this configurable
             buttons.bold = makeButton("wmd-bold-button", getStringAndKey("bold"), "0px", bindCommand("doBold"));
             buttons.italic = makeButton("wmd-italic-button", getStringAndKey("italic"), "-20px", bindCommand("doItalic"));
             makeSpacer(1);
@@ -1659,10 +1660,10 @@
                 return this.doLinkOrImage(chunk, postProcessing, false);
             }));
             buttons.quote = makeButton("wmd-quote-button", getStringAndKey("quote"), "-60px", bindCommand("doBlockquote"));
-            buttons.code = makeButton("wmd-code-button", getStringAndKey("code"), "-80px", bindCommand("doCode"));
-            buttons.image = makeButton("wmd-image-button", getStringAndKey("image"), "-100px", bindCommand(function (chunk, postProcessing) {
-                return this.doLinkOrImage(chunk, postProcessing, true);
-            }));
+            // buttons.code = makeButton("wmd-code-button", getStringAndKey("code"), "-80px", bindCommand("doCode"));
+            // buttons.image = makeButton("wmd-image-button", getStringAndKey("image"), "-100px", bindCommand(function (chunk, postProcessing) {
+            //     return this.doLinkOrImage(chunk, postProcessing, true);
+            // }));
             makeSpacer(2);
             buttons.olist = makeButton("wmd-olist-button", getStringAndKey("olist"), "-120px", bindCommand(function (chunk, postProcessing) {
                 this.doList(chunk, postProcessing, true);
@@ -1671,7 +1672,7 @@
                 this.doList(chunk, postProcessing, false);
             }));
             buttons.heading = makeButton("wmd-heading-button", getStringAndKey("heading"), "-160px", bindCommand("doHeading"));
-            buttons.hr = makeButton("wmd-hr-button", getStringAndKey("hr"), "-180px", bindCommand("doHorizontalRule"));
+            // buttons.hr = makeButton("wmd-hr-button", getStringAndKey("hr"), "-180px", bindCommand("doHorizontalRule"));
             makeSpacer(3);
             buttons.undo = makeButton("wmd-undo-button", getStringAndKey("undo"), "-200px", null);
             buttons.undo.execute = function (manager) { inputBox.session.getUndoManager().undo(); };
