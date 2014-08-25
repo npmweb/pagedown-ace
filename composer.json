@@ -1,6 +1,6 @@
 {
     "name": "npmweb/pagedown-ace",
-    "description": "PageDown ACE with a Composer Components config file",
+    "description": "Markdown editor with live preview",
     "type": "component",
     "repositories": [
         { "type": "vcs", "url": "git@github.com:npmweb/ace" }
