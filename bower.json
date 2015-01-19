@@ -10,7 +10,7 @@
     "Markdown.Sanitizer.js"
   ],
   "dependencies": {
-    "ace": "git@bitbucket.org:npmweb/ace#1039be1ccc32e79de98a42a10f92503d0cf50179"
+    "ace": "git@github.com:npmweb/ace#1039be1ccc32e79de98a42a10f92503d0cf50179"
   },
   "ignore": [
     "**/.*",
