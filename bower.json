@@ -1,0 +1,22 @@
+{
+  "name": "pagedown-ace",
+  "version": "1.0.1",
+  "authors": [
+    "Josh Justice <josh.justice@northpoint.org>"
+  ],
+  "main": [
+    "Markdown.Converter.js",
+    "Markdown.Editor.js",
+    "Markdown.Sanitizer.js"
+  ],
+  "dependencies": {
+    "ace": "git@bitbucket.org:npmweb/ace#1039be1ccc32e79de98a42a10f92503d0cf50179"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
